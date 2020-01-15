@@ -5,11 +5,18 @@ The contracts for Wanchain 4.0 T-Bridge framework
 
 With T-Bridge framework, Cross-Chain Transactions (CCT) contracts and sample business contracts have been provided for the CCT transactions.
 
+<img width='400px' src='./images/T-Bridge-Contracts.jpg' />
+
+For the sample scenario, Wanchain blockchain and HyperLedger BESU blockchain have been connected. Here HyperLedger BESU plays the role of private and business blockchain. Wanchain plays the role of public and router blockchain.
+
+For the sample scenaio, user owns the WRC20 token. Two cases are supported:
+
+1. User shall be able to use the exchange service to exchange WRC20 token to B token in BESU, and pay the exchanged B token to others. 
+2. User shall be able to use the exchange service to exchange WRC20 token to B token in BESU, and buy the goods published in BESU. 
+ 
 For new CCT scenarios, additional business contracts could be developed accordingly.
 
 # Deployment
-
-For the deployment of the sample scenario, Wanchain blockchain and HyperLedger BESU blockchain have been connected. Here HyperLedger BESU plays the role of private and business blockchain. Wanchain plays the role of public and router blockchain.
 
 For Wanchain mainnet, relevant contracts have been deployed:
 
