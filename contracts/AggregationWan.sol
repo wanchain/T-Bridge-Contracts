@@ -215,33 +215,6 @@ contract AggregationWan is AggregationBase{
         emit ExchangePay(chainId,proofRecord.toChain,proofRecord.pmId,proofRecord.channel,cctTxHash,SRVID,ENTRYMOD_EXCHANGEPAYLOCK,xHash,payToken,msg.sender,receiptToken,receiptAddress,receiptAmount);
 
     }
-
-    // function revokeByPm(bytes32 cctTxHash) private returns(bool) {
-    //     ProofRecord storage  proofRecord = proofHistory[cctTxHash];
-    //     if(proofRecord.cctTxHash == 0x0) return false;
-    //     if(proofRecord.status != ProofStatus.CONFIRM && proofRecord.status != ProofStatus.LOCK) return false;
-        
-        
-    //     bool ret = wrch_.revoke(cctTxHash);
-    //     if (ret) setSubSrvStatus(cctTxHash,SRVID_WRCH,ProofStatus.REVOKE);
-        
-    //     address subSrv;
-    //     subSrv = cctChannel.getChannelSubSrv(proofRecord.channel,SRVID_EXCHANGE);
-    //     // require(contractExists(subSrv),"ExchangeProxy not exists");
-    //     ret = ExchangeProxy(subSrv).exchangeRevoke(cctTxHash);
-    //     if (ret) setSubSrvStatus(cctTxHash,SRVID_EXCHANGE,ProofStatus.REVOKE);
-        
-    //     subSrv = cctChannel.getChannelSubSrv(proofRecord.channel,SRVID_GOODS);
-    //     // require(contractExists(subSrv),"GoodsProxy not exists");
-    //     ret = GoodsProxy(subSrv).buyRevoke(cctTxHash);
-    //     if(ret) setSubSrvStatus(cctTxHash,SRVID_GOODS,ProofStatus.REVOKE);
-        
-    //     calAndUpdateProofStatus(cctTxHash);
-    //     if(proofRecord.status == ProofStatus.REVOKE){
-    //         emit Revoke(chainId,proofRecord.toChain,proofRecord.pmId,proofRecord.channel,cctTxHash,SRVID,ENTRYMOD_EXCHANGEBUYREVOKE);
-    //     }
-    //     return true;
-    // }
     
     function revoke(bytes32 cctTxHash) public {
         ProofRecord storage  proofRecord = proofHistory[cctTxHash];
@@ -249,19 +222,30 @@ contract AggregationWan is AggregationBase{
         require(proofRecord.status == ProofStatus.CONFIRM || proofRecord.status == ProofStatus.LOCK,"proofRecord is not LOCKED");
         // require(proofRecord.sender == msg.sender, "not authorized");
         
-        wrch_.revoke(cctTxHash);
-        setSubSrvStatus(cctTxHash,SRVID_WRCH,ProofStatus.REVOKE);
+        uint i;
+        for (i = 0; i < proofRecord.subSrvStatuList.length; i++) {
+            address subSrv;
+            bool ret;
+            if(proofRecord.subSrvStatuList[i].srvId == SRVID_WRCH){
+                wrch_.revoke(cctTxHash);
+                setSubSrvStatus(cctTxHash,SRVID_WRCH,ProofStatus.REVOKE);
+            }
+            else if(proofRecord.subSrvStatuList[i].srvId == SRVID_EXCHANGE){
+                
+                subSrv = cctChannel.getChannelSubSrv(proofRecord.channel,SRVID_EXCHANGE);
         
-        address subSrv;
-        subSrv = cctChannel.getChannelSubSrv(proofRecord.channel,SRVID_EXCHANGE);
-        require(contractExists(subSrv),"ExchangeProxy not exists");
-        ExchangeProxy(subSrv).exchangeRevoke(cctTxHash);
-        setSubSrvStatus(cctTxHash,SRVID_EXCHANGE,ProofStatus.REVOKE);
-        
-        subSrv = cctChannel.getChannelSubSrv(proofRecord.channel,SRVID_GOODS);
-        require(contractExists(subSrv),"GoodsProxy not exists");
-        GoodsProxy(subSrv).buyRevoke(cctTxHash);
-        setSubSrvStatus(cctTxHash,SRVID_GOODS,ProofStatus.REVOKE);
+                ExchangeProxy(subSrv).exchangeRevoke(cctTxHash);
+                setSubSrvStatus(cctTxHash,SRVID_EXCHANGE,ProofStatus.COMMIT);
+
+            }else if(proofRecord.subSrvStatuList[i].srvId == SRVID_GOODS){
+                subSrv = cctChannel.getChannelSubSrv(proofRecord.channel,SRVID_GOODS);
+                GoodsProxy(subSrv).buyRevoke(cctTxHash);
+                setSubSrvStatus(cctTxHash,SRVID_GOODS,ProofStatus.COMMIT);
+
+            }else{
+                require(false,"");
+            }
+        }
         
         proofRecord.status = ProofStatus.REVOKE;
         
